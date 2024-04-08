@@ -1,0 +1,69 @@
+System prodcons24
+
+Dispatch 	distance : distance( N ) "dispatch"
+Request		distance : distance( N ) "request"
+
+Reply 		distanceack : ack( N ) 
+
+Context ctxprodcons ip [host="localhost" port=8014]
+
+QActor producer1 context ctxprodcons { 
+	State s0 initial {
+		printCurrentMessage color blue
+	} 
+	Goto sendDispatch
+	
+	State sendDispatch {
+		printCurrentMessage
+		forward consumer -m distance : distance(10)
+	}
+}
+
+QActor producer2 context ctxprodcons {
+	State s0 initial {
+		printCurrentMessage color magenta
+	}
+	Goto sendRequest
+	
+	State sendRequest {
+		printCurrentMessage color magenta
+		request consumer -m distance : distance(30)
+	}
+	Transition t0 whenReply distanceack -> handleAnswer
+	
+	State handleAnswer {
+		printCurrentMessage color magenta
+		delay 1000
+		[# System.exit(0) #]
+	}
+}
+
+QActor consumer context ctxprodcons {
+	State s0 initial {
+		println("$name STARTS") color green
+	}
+	Transition t0 whenMsg distance -> handleDispatch
+					whenRequest distance -> handleRequest
+					
+	State handleDispatch {
+		printCurrentMessage color green
+		onMsg( distance : distance( N ) ) {
+			[# var Distance = payloadArg( 0 ) #]
+			println("$name has received a dispatch with distance $Distance") color green	
+		}
+	}
+	Transition t0 whenMsg distance -> handleDispatch
+					whenRequest distance -> handleRequest
+					
+	State handleRequest {
+		printCurrentMessage color green
+		onMsg( distance : distance( N ) ) {
+			[# var Distance = payloadArg( 0 ) #]
+			println("$name has received a request with distance $Distance") color green
+			replyTo distance with distanceack : ack( $Distance )	
+		}
+	}
+	Transition t0 whenMsg distance -> handleDispatch
+					whenRequest distance -> handleRequest
+	
+}

@@ -1,0 +1,73 @@
+System wolfdetection 
+
+// messaggi
+Dispatch obstacledetected : obstacledetected( DISTANCE )  "wolf detected"
+Dispatch ledinfo : ledinfo( INFO )
+
+Context ctxwolfdetection  ip [host="localhost" port=8013] 
+   
+
+
+QActor wolfdetectionservice context ctxwolfdetection { 
+	
+	State s0 initial{ 
+		println("$name STARTS ") color blue
+		observeResource camera msgid ledinfo
+	}
+	Transition t0 whenMsg ledinfo -> handleled
+	
+	State handleled {
+    	printCurrentMessage color blue
+		onMsg( ledinfo : ledinfo(INFO)){
+  			[# 
+  				val msg = payloadArg(0)
+			#]
+			println("$msg ") color green
+    	}
+  	}
+  	Transition t0 whenMsg ledinfo -> handleled
+	        
+}
+
+QActor sonar context ctxwolfdetection {
+	[# 
+		var DMIN = 100;
+		var CurrentDistance = 50; 
+	#]
+	
+	State s0 initial {
+		println("$name STARTS ") color magenta
+	}
+	Goto detectobstacles
+	
+	State detectobstacles {
+		println("$name detectobstacles ") color magenta
+		// check if current distance < DMIN
+		//[# CommUtils.waitTheUser("$name Please HIT to detect a wolf ") #]
+		delay 3000
+		
+		println("$name wold detected ") color magenta
+		
+		updateResource [# "ledinfo(blue led on)" #]
+		[# var Distance = DMIN - CurrentDistance #]
+		forward camera -m obstacledetected : obstacledetected( $Distance )
+	}
+}
+
+QActor camera context ctxwolfdetection {
+	
+	State s0 initial {
+		println("$name STARTS ") color green
+	}
+	Goto takepicture
+	
+	State takepicture {
+		println("$name takepicture ") color green
+	
+		onMsg( obstacledetected : obstacledetected( DISTANCE ) ) {
+			// check if the obstacles is a wolf
+			updateResource [# "ledinfo(red led on)" #]
+		}
+	}
+	Transition t0 whenMsg obstacledetected -> takepicture
+}

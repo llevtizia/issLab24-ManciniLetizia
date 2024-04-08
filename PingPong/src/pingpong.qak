@@ -1,0 +1,77 @@
+System pingpong
+
+Dispatch ball : ball( N ) "info exchanged"
+
+Context ctxtest ip [host="localhost" port=8014]
+
+QActor ping context ctxtest {
+	
+	[# 
+		var N = 1 
+		val TMAX = 1500L
+
+	#]
+	
+	State s0 initial {
+		delay 1000
+		println("$name STARTS ") color blue
+	}
+	Goto handleBall
+	
+	State handleBall {
+		delay 1000
+		println("$name sending ball n. $N ") color blue
+		forward pong -m ball : ball( $N )
+		[# N = N + 1 #]
+	}
+	Transition t0 whenTimeVar TMAX -> endofexchange
+					whenMsg ball -> handleBall
+					
+	State endofexchange {
+		println("$name ENDS ") color blue
+		[# System.exit(0) #]
+	}
+}
+
+
+QActor pong context ctxtest {
+	
+	[#  val TMAX = 1500L #]
+	
+	State s0 initial {
+		println("$name STARTS  ") color magenta
+	}
+	Transition t0 whenMsg ball -> handleBall
+	
+	State handleBall {
+		onMsg( ball : ball( X ) ) {
+			delay 1000
+			[# val BallNumber = payloadArg(0).toInt() #]
+			println("$name receiving ball n. $BallNumber ") color magenta
+			forward ping -m ball : ball( $BallNumber )
+			/* 
+			if [# BallNumber <= 4 #] {
+				delay 500
+				forward ping -m ball : ball( $BallNumber )
+			}   
+			* 
+			*/ 
+		}
+	}
+	Transition t0 whenTimeVar TMAX  -> endofexchange
+					whenMsg ball -> handleBall
+					
+	State endofexchange {
+		println("$name ENDS ") color magenta
+	}
+	
+	/* 
+	State waitRequest {
+		println("$name waiting...  ") color magenta
+		delay 1500
+	}
+	Transition t0 whenMsg ball -> handleBall
+	* */
+	
+
+}

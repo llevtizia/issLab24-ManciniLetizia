@@ -1,0 +1,33 @@
+System helloworld0
+
+Dispatch info : info(N) "Informazione inviata dal worker al display"
+
+Context ctxhello ip [host="localhost" port=8000] 
+
+QActor worker context ctxhello{
+	State s0 initial{
+		printCurrentMessage
+		println("01 - Hello world 01") color magenta
+		[# CommUtils.outmagenta("01 - Hello world again") #]   
+		
+		forward display -m info : info(10) 
+		forward display -m info : info(20) 
+	} 
+} 
+
+QActor display context ctxhello {
+	State s0 initial {
+		printCurrentMessage
+		println("$name START") color blue
+	}
+	Transition t0 whenMsg info -> handleInfo
+	
+	State handleInfo {
+		printCurrentMessage
+		
+		onMsg( info : info(N) ) {
+			println("$name ${payloadArg(0)}") color blue
+		}
+	}
+	Transition t0 whenMsg info -> handleInfo
+}

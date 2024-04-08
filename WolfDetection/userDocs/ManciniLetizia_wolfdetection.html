@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" type="text/css" href="html/_static/pygments.css" />
+    
+    <head>
+        <title>Wolf Detection - Letizia Mancini</title>
+    </head>
+    
+    <body>
+        <div id="top">
+            <h1>LABORATORIO DI INGEGNERIA DEI SISTEMI SOFTWARE <font size="5"></font> </h1>
+        </div>  
+
+        <!-- INTRODUCTION -->
+        <div class="body"> 
+        <h2>Introduction</h2>
+        <div>
+            Si vuole esplorare come sia possibile costruire <b>modelli eseguibili</b> di un sistema software partendo 
+            dall'analisi del problema, senza entrare subito nei dettagli tecnologici necessari per la costruzione 
+            effettiva del software.
+            <br><br>
+            Il caso di studio è una <b>applicazione IOT</b> denominata <ks>WolfDetection</ks>.
+        </div>
+
+        
+        
+        <!-- REQUIREMENTS -->
+        <h2>Requirements</h2>
+        <div class="remark">
+            <a href="html/SitemaRilevamento.html#wd-requirements">Requisiti dati dal committente</a>
+        </div>
+
+
+        <!-- REQUIREMENTS ANALYSIS -->
+        <h2>Requirement analysis</h2>
+        <div class="remark">
+            <table>
+                <tr>
+                    <td class="key">Wolf Detection</td>
+                    <td>il servizio che si richiede di progettare</td>
+                </tr>
+                <tr>
+                    <td class="key">Led</td>
+                    <td>il sistema comprende due Led, uno rosso e uno blu</td>
+                </tr>
+                <tr>
+                    <td class="key">DMIN</td>
+                    <td>distanza minima di rilevamento di un ostacolo</td>
+                </tr>
+                <tr>
+                    <td class="key">Sonar HC-SR04</td>
+                    <td>dispositivo connesso ad un Raspberry Pi
+                        <ul>
+                            <li>tramite comandi impartiti dalla stazione, si deve poter accendere e spegnere in remoto</li>
+                            <li>quando rileva un ostacolo a distanza minore di <b>DMIN</b>, accende il <ks>Led blu</ks></li>
+                        </ul>         
+                    </td>
+                </tr>
+                <tr>
+                    <td class="key">Fotocamera</td>
+                    <td>scatta una foto dell'ostacolo rilevato dal sonar e la invia ad un elaboratore per 
+                        stabilire se l'ostacolo sia o meno un lupo</td>
+                </tr>
+            </table>
+       
+            <br>
+            <p id="userstories"><div class="slide1">Use cases and scenarios</div></p>
+
+            <p>
+                <ol>
+                    <li>
+                        Quando il <b>Sonar</b> rileva un ostacolo a distanza inferiore a un limite prefissato <b>DMIN</b>, 
+                        il servizio accende il <ks>Led blu</ks>
+                    </li>
+                    <li>
+                        La <b>fotocamera</b> scatta una fotografia dell’ostacolo rilevato a distanza inferiore a <b>DMIN</b> 
+                        e la invia ad un elaboratore di immagini in grado di capire se l’ostacolo è un lupo
+                    </li>                    
+                    <li>
+                        Se è stato rilevato un lupo, si accende il <k>Led rosso</k>
+                    </li>
+                    <li>
+                        Il <ks>Led blu</ks> e il <k>Led rosso</k> si spengono quando il sonar non rileva più ostacoli 
+                        a distanza inferiore a DMIN 
+                    </li>
+                </ol>
+            </p>
+            <p>
+                Il committente fornisce 
+                <ul>
+                    <li>
+                        il <k>metamodello QActor</k> per la modellazione del sistema (si veda 
+                        <a href="./html/QakActors24.html">QakActors24</a> per maggiori informazioni)
+                    </li>
+                </ul>
+            </p>
+        </div>
+
+
+        <!-- PROBLEM ANALYSIS -->
+        <h2>Problem analysis</h2>
+        <div class="remark">
+            <p>
+            
+                Per realizzare un primo modello del sistema sulla base delle analisi, si sceglie di utilizzare il linguaggio di modellazione 
+                <a href="./html/QakActors24.html">Qak</a> fornito dal committente. Il metamodello 
+                <ul>
+                    <li>consente di catturare gli aspetti essenziali del sistema</li>
+                    <li>offre l'astrazione <ks>QActor</ks> per rappresentare le entità come componenti autonomi 
+                        ed indipendenti. </li>
+                </ul>
+                La <i>Software Factory</i> definita per il linguaggio crea automaticamente un modello 
+                eseguibile in <b>Kotlin</b>.
+
+                <p>
+                    L'architettura del sistema è la seguente:
+                    <br><br>
+                    <img src="../wolfdetectionarch.png" alt="system arch" class="small_image">
+                </p>
+                
+                <p>
+                    Il sistema &eacute costituito da un <b>contesto</b>:
+                    <ul>
+                        <li>
+                            <b>ctxwolfdetection</b>
+                        </li>
+                    </ul>
+
+                    <br>
+                    <p id="userstories"><div class="slide1"><a href="../src/wolfdetection.qak">WOLF DETECTION</a></div></p>
+                    <p>
+                        <h4>sonar</h4>
+                        <ul>
+                            <li>Il <b>sonar</b> invia un <code>Dispatch obstacledetected : 
+                                obstacledetected( DISTANCE )</code> alla camera quando rileva un ostacolo</li>
+                            <li><code>updateResource [# "ledinfo(blue led on)" #]</code> per accendere il <ks>led blu</ks> 
+                            quando viene rilevato un ostacolo</li>
+                        </ul>
+                    </p>
+                    <p>
+                        <h4>camera</h4>
+                        <ul>
+                            <li><code>updateResource [# "ledinfo(red led on)" #]</code> per accendere il <k>led rosso</k> 
+                            quando riceve un <code>Dispatch obstacledetected</code> dal sonar</li>
+                        </ul>
+                    </p>
+                    <p>
+                        <h4>wolfdetectionservice</h4>
+                        <ul>
+                            <li>visualizza lo stato dei led</li>
+                        </ul>
+                    </p>
+                </p> 
+            </p>
+
+            
+            
+            
+        </div>
+
+        <h2>Test plans</h2> 
+
+
+        <h2>Project</h2>
+        <div class="remark">
+        </div> 
+
+        <h2>Testing</h2> 
+        
+
+        <h2>Deployment</h2> 
+
+        
+        <h2>Maintenance</h2> 
+        
+        <!-- USEFUL
+        <table style="width:100%" border="1">
+        <tr>
+        <td style="width:50%">
+        </td>
+        <td></td>
+        </tr>
+        </table>
+        -->
+                    
+        <br/><br/> 	
+        </div>  
+
+        <div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;color:white">
+        <ul>
+            <li>By Letizia Mancini</li>
+            <li>email: letizia.mancini3@studio.unibo.it </li>
+            <li>
+                GIT repo: <a href="https://github.com/llevtizia/coldstorageservice-iss2023">https://github.com/llevtizia/coldstorageservice-iss2023</a> 
+            </li>
+            <li>matricola: 0000926656</li>
+        </ul>
+
+
+        <img src="html/_images/picture.jpg" alt="picture" width="15%" height="15%" margin-left="2%">
+
+        </div> 
+    </body>
+</html>

@@ -1,0 +1,3 @@
+{"actor":"wolfdetectionservice", "msgType":"dispatch", "curstate":"s0", "nextstate":"handleled", "msgId":"ledinfo"}
+{"actor":"wolfdetectionservice", "msgType":"dispatch", "curstate":"handleled", "nextstate":"handleled", "msgId":"ledinfo"}
+{"actor":"camera", "msgType":"dispatch", "curstate":"takepicture", "nextstate":"takepicture", "msgId":"obstacledetected"}
